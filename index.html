@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Guild League</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="loading-overlay" id="loadingOverlay">
+      <div class="spinner"></div>
+    </div>
+
+    <div class="container">
+      <h1 class="text-4xl font-extrabold text-center text-gray-800 mb-8">
+        Guilds League
+      </h1>
+      <p class="text-center text-gray-600 mb-6">
+        Manage your guilds across League A and League B. Data is saved locally.
+      </p>
+
+      <div class="mb-8 flex justify-center gap-4 flex-wrap">
+        <button id="addGuildBtn" class="btn btn-primary">
+          <i class="fas fa-plus-circle"></i> Add New Guild
+        </button>
+        <button id="exportCsvBtn" class="btn btn-secondary">
+          <i class="fas fa-file-csv"></i> Export to CSV
+        </button>
+        <label for="importCsvInput" class="btn btn-info cursor-pointer">
+          <i class="fas fa-upload"></i> Import from CSV
+          <input type="file" id="importCsvInput" accept=".csv" class="hidden" />
+        </label>
+      </div>
+
+      <div class="league-section mb-8">
+        <h2 class="text-3xl font-bold text-gray-700 mb-6 text-center">
+          Guild Statistics
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div>
+            <canvas id="scoreChart"></canvas>
+          </div>
+          <div>
+            <canvas id="winLossChart"></canvas>
+          </div>
+          <div>
+            <canvas id="killsChart"></canvas>
+          </div>
+        </div>
+        <p class="text-center text-gray-500 text-sm mt-6">
+          * Note on Screenshot Input: This application cannot directly read
+          data from screenshots yet. Please use the CSV import or directly add data.
+        </p>
+      </div>
+
+      <div class="league-section mb-8">
+        <h2 class="text-3xl font-bold text-gray-700 mb-6 text-center">
+          League A
+        </h2>
+        <div class="overflow-x-auto">
+          <table class="min-w-full bg-white rounded-lg shadow-sm">
+            <thead>
+              <tr>
+                <th class="table-header text-left rounded-tl-lg">Rank</th>
+                <th class="table-header text-left">Guild Name</th>
+                <th class="table-header text-left">Score</th>
+                <th class="table-header text-left">Wins</th>
+                <th class="table-header text-left">Losses</th>
+                <th class="table-header text-left">Kills For</th>
+                <th class="table-header text-left">Kills Against</th>
+                <th class="table-header text-center rounded-tr-lg">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="leagueATableBody"></tbody>
+          </table>
+        </div>
+        <p id="noGuildsA" class="text-center text-gray-500 mt-4 hidden">
+          No guilds in League A yet. Add one!
+        </p>
+      </div>
+
+      <div class="league-section">
+        <h2 class="text-3xl font-bold text-gray-700 mb-6 text-center">
+          League B
+        </h2>
+        <div class="overflow-x-auto">
+          <table class="min-w-full bg-white rounded-lg shadow-sm">
+            <thead>
+              <tr>
+                <th class="table-header text-left rounded-tl-lg">Rank</th>
+                <th class="table-header text-left">Guild Name</th>
+                <th class="table-header text-left">Score</th>
+                <th class="table-header text-left">Wins</th>
+                <th class="table-header text-left">Losses</th>
+                <th class="table-header text-left">Kills For</th>
+                <th class="table-header text-left">Kills Against</th>
+                <th class="table-header text-center rounded-tr-lg">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="leagueBTableBody"></tbody>
+          </table>
+        </div>
+        <p id="noGuildsB" class="text-center text-gray-500 mt-4 hidden">
+          No guilds in League B yet. Add one!
+        </p>
+      </div>
+    </div>
+
+    <div id="guildModal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 id="modalTitle" class="modal-title">Add New Guild</h3>
+          <button class="close-button" onclick="closeModal()">&times;</button>
+        </div>
+        <form id="guildForm">
+          <input type="hidden" id="guildId" />
+          <div class="form-group">
+            <label for="guildName" class="form-label">Guild Name:</label>
+            <input
+              type="text"
+              id="guildName"
+              placeholder="Enter guild name"
+              required
+            />
+          </div>
+          <div class="form-group">
+            <label for="guildScore" class="form-label">Score:</label>
+            <input type="number" id="guildScore" value="0" min="0" required />
+          </div>
+          <div class="form-group">
+            <label for="guildWins" class="form-label">Wins:</label>
+            <input type="number" id="guildWins" value="0" min="0" required />
+          </div>
+          <div class="form-group">
+            <label for="guildLosses" class="form-label">Losses:</label>
+            <input type="number" id="guildLosses" value="0" min="0" required />
+          </div>
+          <div class="form-group">
+            <label for="guildKillsFor" class="form-label">Kills For:</label>
+            <input
+              type="number"
+              id="guildKillsFor"
+              value="0"
+              min="0"
+              required
+            />
+          </div>
+          <div class="form-group">
+            <label for="guildKillsAgainst" class="form-label"
+              >Kills Against:</label
+            >
+            <input
+              type="number"
+              id="guildKillsAgainst"
+              value="0"
+              min="0"
+              required
+            />
+          </div>
+          <div class="form-group">
+            <label for="guildLeague" class="form-label">League:</label>
+            <select
+              id="guildLeague"
+              class="w-full p-2 border border-gray-300 rounded-lg"
+            >
+              <option value="A">League A</option>
+              <option value="B">League B</option>
+            </select>
+          </div>
+          <div class="flex justify-end gap-3 mt-6">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              onclick="closeModal()"
+            >
+              Cancel
+            </button>
+            <button type="submit" id="saveGuildBtn" class="btn btn-primary">
+              Save Guild
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div id="messageBox" class="message-box"></div>
+
+    <script type="module" src="script.js"></script>
+  </body>
+</html>
